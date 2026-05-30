@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 
 """
+Example Usage: python3 ../../analyze_TinkerGpu_npt_v1.0.0.py --root ./ --temps T300K
+
 Analyze Tinker-GPU / Tinker-HP NPT results for multiple temperature directories.
 
 Expected directory structure:
