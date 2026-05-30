@@ -219,6 +219,28 @@ def safe_name(x):
     x = re.sub(r"[^\w\-.]+", "_", x)
     return x
 
+def make_pdb_without_conect(pdb_path, clean_dir, force=False):
+    pdb_path = Path(pdb_path)
+    clean_dir = Path(clean_dir)
+    clean_dir.mkdir(parents=True, exist_ok=True)
+
+    clean_path = clean_dir / f"{pdb_path.stem}_noCONECT.pdb"
+
+    if clean_path.exists() and not force:
+        return clean_path
+
+    n_conect = 0
+    with open(pdb_path, "r") as fin, open(clean_path, "w") as fout:
+        for line in fin:
+            if line.startswith("CONECT"):
+                n_conect += 1
+                continue
+            fout.write(line)
+
+    print(f"[CLEAN PDB] {pdb_path} -> {clean_path}")
+    print(f"            removed CONECT lines: {n_conect}")
+
+    return clean_path
 
 def plot_multi_rdf(
     curves,
@@ -486,7 +508,15 @@ def main():
             else:
                 print(f"[CALC] {label}: {pdb_path}")
 
-                u = mda.Universe(str(pdb_path))
+                
+                clean_pdb_path = make_pdb_without_conect(
+                    pdb_path,
+                    clean_dir=outdir / "clean_pdb",
+                    force=args.force,
+                )
+
+                u = mda.Universe(str(clean_pdb_path))
+
                 n_frames = len(u.trajectory)
                 start_frame = int(args.start_ratio * n_frames)
 
