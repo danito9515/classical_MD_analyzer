@@ -54,9 +54,22 @@ def infer_element_from_atom(atom):
 
 def get_indices_by_element(universe, elem):
     elem = normalize_element(elem)
+    if not elem:
+        return np.array([], dtype=int)
+
+    is_standard_element = elem in ELEMENTS
     indices = []
     for atom in universe.atoms:
-        if infer_element_from_atom(atom) == elem:
+        if is_standard_element:
+            atom_token = infer_element_from_atom(atom)
+        else:
+            name = getattr(atom, "name", "")
+            name = re.sub(r"[^A-Za-z]", "", str(name))
+            atom_token = normalize_element(name)
+            if not atom_token:
+                atom_token = normalize_element(getattr(atom, "element", ""))
+
+        if atom_token == elem:
             indices.append(atom.index)
     return np.array(indices, dtype=int)
 
