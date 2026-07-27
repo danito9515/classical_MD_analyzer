@@ -28,7 +28,7 @@ ELEMENTS = {
 
 
 def normalize_element(x):
-    x = str(x).strip()
+    x = re.sub(r"[^A-Za-z]", "", str(x).strip())
     if not x:
         return ""
     if len(x) >= 2:
@@ -38,7 +38,7 @@ def normalize_element(x):
     cand1 = x[0].upper()
     if cand1 in ELEMENTS:
         return cand1
-    return ""
+    return x.upper()
 
 
 def infer_element_from_atom(atom):
@@ -198,7 +198,11 @@ def parse_pair(pair_str):
     else:
         raise ValueError(f"Pair should be like Li-N or Li_N: {pair_str}")
 
-    return normalize_element(a), normalize_element(b)
+    a_norm = normalize_element(a)
+    b_norm = normalize_element(b)
+    if not a_norm or not b_norm:
+        raise ValueError(f"Invalid pair token(s): {pair_str}")
+    return a_norm, b_norm
 
 
 def load_reference_txt(path):
