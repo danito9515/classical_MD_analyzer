@@ -28,7 +28,7 @@ ELEMENTS = {
 
 
 def normalize_element(x):
-    x = str(x).strip()
+    x = re.sub(r"[^A-Za-z]", "", str(x).strip())
     if not x:
         return ""
     if len(x) >= 2:
@@ -38,7 +38,7 @@ def normalize_element(x):
     cand1 = x[0].upper()
     if cand1 in ELEMENTS:
         return cand1
-    return ""
+    return x.upper()
 
 
 def infer_element_from_atom(atom):
@@ -54,9 +54,22 @@ def infer_element_from_atom(atom):
 
 def get_indices_by_element(universe, elem):
     elem = normalize_element(elem)
+    if not elem:
+        return np.array([], dtype=int)
+
+    is_standard_element = elem in ELEMENTS
     indices = []
     for atom in universe.atoms:
-        if infer_element_from_atom(atom) == elem:
+        if is_standard_element:
+            atom_token = infer_element_from_atom(atom)
+        else:
+            name = getattr(atom, "name", "")
+            name = re.sub(r"[^A-Za-z]", "", str(name))
+            atom_token = normalize_element(name)
+            if not atom_token:
+                atom_token = normalize_element(getattr(atom, "element", ""))
+
+        if atom_token == elem:
             indices.append(atom.index)
     return np.array(indices, dtype=int)
 
@@ -198,7 +211,11 @@ def parse_pair(pair_str):
     else:
         raise ValueError(f"Pair should be like Li-N or Li_N: {pair_str}")
 
-    return normalize_element(a), normalize_element(b)
+    a_norm = normalize_element(a)
+    b_norm = normalize_element(b)
+    if not a_norm or not b_norm:
+        raise ValueError(f"Invalid pair token(s): {pair_str}")
+    return a_norm, b_norm
 
 
 def load_reference_txt(path):
